@@ -1,6 +1,6 @@
 """
 Copyright 2021-2021 The jdh99 Authors. All rights reserved.
-天泽物联网sdk
+海萤物联网sdk
 Authors: jdh99 <jdh821@163.com>
 """
 
@@ -15,6 +15,10 @@ import tziot.fdcom as fdcom
 
 import dcompy as dcom
 import utzpy as utz
+import _thread
+import uasyncio as asyncio
+import network
+import time
 
 _is_first_run = True
 
@@ -59,6 +63,7 @@ def bind_pipe_net(ia: int, pwd: str, ip: str, port: int) -> int:
 
 def _init_system():
     config.init()
+    fpipe.init()
     apply.init()
     conn.init()
     parsecmp.init()
@@ -80,3 +85,35 @@ def bind_pipe(ia: int, send, is_allow_send) -> int:
         _is_first_run = False
         _init_system()
     return fpipe.pipe_bind(ia, send, is_allow_send)
+
+
+def run(app):
+    """运行应用程序"""
+    if app is not None:
+        _thread.start_new_thread(app, ())
+    loop = asyncio.get_event_loop()
+    loop.run_forever()
+
+
+def connect_wifi(ssid: str, key=None, timeout=5) -> bool:
+    """
+    连接wifi
+    :param ssid: wifi热点名
+    :param key: wifi密码.不需要密码则填None
+    :param timeout: 超时时间.单位:s
+    :return: 返回True表示连接成功.False是连接失败
+    """
+    sta_if = network.WLAN(network.STA_IF)
+    if sta_if.isconnected():
+        sta_if.disconnect()
+
+    sta_if.active(True)
+    sta_if.connect(ssid, key)
+
+    count = 0
+    while not sta_if.isconnected():
+        if count >= timeout:
+            return False
+        time.sleep(1)
+        count += 1
+    return True

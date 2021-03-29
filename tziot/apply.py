@@ -14,13 +14,13 @@ import dcompy as dcom
 import lagan
 import utzpy as utz
 import knocky as knock
-import _thread
-import time
+import uasyncio as asyncio
 
 
 def init():
     knock.register(utz.HEADER_CMP, utz.CMP_MSG_TYPE_ASSIGN_SLAVE_ROUTER, deal_assign_slave_router)
-    _thread.start_new_thread(_apply_thread, ())
+    loop = asyncio.get_event_loop()
+    loop.create_task(_apply_thread())
 
 
 def deal_assign_slave_router(req: bytearray, *args) -> (bytearray, bool):
@@ -63,11 +63,11 @@ def inet_ntoa(packed_ip: bytes) -> str:
     return ip
 
 
-def _apply_thread():
+async def _apply_thread():
     while True:
         # 如果网络通道不开启则无需申请
         if not fpipe.pipe_is_allow_send(fpipe.PIPE_NET):
-            time.sleep(1)
+            await asyncio.sleep(1)
             continue
 
         if fdcom.is_dcom_init and param.parent.ia == utz.IA_INVALID:
@@ -75,9 +75,9 @@ def _apply_thread():
             _send_apply_frame()
 
         if fdcom.is_dcom_init:
-            time.sleep(10)
+            await asyncio.sleep(10)
         else:
-            time.sleep(1)
+            await asyncio.sleep(1)
 
 
 def _send_apply_frame():

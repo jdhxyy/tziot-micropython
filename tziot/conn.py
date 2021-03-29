@@ -12,8 +12,8 @@ import tziot.standardlayer as standardlayer
 import knocky as knock
 import utzpy as utz
 import lagan
-import _thread
 import time
+import uasyncio as asyncio
 
 # 最大连接次数.超过连接次数这回清除父路由IA地址,重连父路由
 _CONN_NUM_MAX = 3
@@ -23,8 +23,9 @@ _conn_num = 0
 
 def init():
     knock.register(utz.HEADER_CMP, utz.CMP_MSG_TYPE_ACK_CONNECT_PARENT_ROUTER, deal_ack_connect_parent_router)
-    _thread.start_new_thread(_conn_thread, ())
-    _thread.start_new_thread(_conn_timeout, ())
+    loop = asyncio.get_event_loop()
+    loop.create_task(_conn_thread())
+    loop.create_task(_conn_timeout())
 
 
 def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
@@ -53,13 +54,13 @@ def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
     return None, False
 
 
-def _conn_thread():
+async def _conn_thread():
     global _conn_num
 
     while True:
         # 如果网络通道不开启则无需连接
         if not fpipe.pipe_is_allow_send(fpipe.PIPE_NET):
-            time.sleep(1)
+            await asyncio.sleep(1)
             continue
 
         if param.parent.ia != utz.IA_INVALID:
@@ -73,9 +74,9 @@ def _conn_thread():
             _send_conn_frame()
 
         if param.parent.ia == utz.IA_INVALID:
-            time.sleep(1)
+            await asyncio.sleep(1)
         else:
-            time.sleep(config.CONN_INTERVAL)
+            await asyncio.sleep(config.CONN_INTERVAL)
 
 
 def _send_conn_frame():
@@ -108,17 +109,17 @@ def _send_conn_frame():
     standardlayer.send(payload, header, param.parent.pipe)
 
 
-def _conn_timeout():
+async def _conn_timeout():
     while True:
         if param.parent.ia == utz.IA_INVALID or not param.parent.is_conn:
-            time.sleep(1)
+            await asyncio.sleep(1)
             continue
 
         if int(time.time()) - param.parent.timestamp > config.CONN_TIMEOUT_MAX:
             param.parent.ia = utz.IA_INVALID
             param.parent.is_conn = False
 
-        time.sleep(1)
+        await asyncio.sleep(1)
 
 
 def is_conn() -> bool:

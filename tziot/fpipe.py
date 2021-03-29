@@ -12,6 +12,7 @@ import _thread
 import lagan
 import dcompy as dcom
 import utzpy as utz
+import uasyncio as asyncio
 
 PIPE_NET = 0xffff
 
@@ -23,10 +24,35 @@ class _Api:
     send = None  # [[int, bytearray], None]
 
 
+class _SocketRxItem:
+    def __init__(self):
+        self.is_rx = False
+        self.pipe = 0
+        self.data = bytearray()
+
+
 _pipes = dict()
 _pipe_num = 0
 _socket = None
 _observers = list()
+
+
+_item = _SocketRxItem()
+
+
+def init():
+    loop = asyncio.get_event_loop()
+    loop.create_task(_deal_socket_rx())
+
+
+async def _deal_socket_rx():
+    global _item
+    while True:
+        if _item.is_rx:
+            pipe_receive(_item.pipe, _item.data)
+            _item.is_rx = False
+            continue
+        await asyncio.sleep(0)
 
 
 def pipe_bind_net(ia: int, pwd: str, ip: str, port: int) -> int:
@@ -47,14 +73,20 @@ def pipe_bind_net(ia: int, pwd: str, ip: str, port: int) -> int:
 
 
 def _socket_rx():
-    global _socket
+    global _socket, _item
     while True:
         data, address = _socket.recvfrom(config.FRAME_MAX_LEN)
         if len(data) == 0:
             continue
         lagan.info(config.TAG, 'udp rx:%r len:%d', address, len(data))
         lagan.print_hex(config.TAG, lagan.LEVEL_DEBUG, bytearray(data))
-        pipe_receive(dcom.addr_to_pipe(address[0], address[1]), data)
+
+        if _item.is_rx:
+            lagan.warn(config.TAG, 'udp rx:%r len:%d.deal is too slow!!!', address, len(data))
+            continue
+        _item.pipe = dcom.addr_to_pipe(address[0], address[1])
+        _item.data = data
+        _item.is_rx = True
 
 
 def _socket_tx(pipe: int, data: bytearray):
