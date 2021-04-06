@@ -9,7 +9,7 @@ import dcompy as dcom
 TAG = 'tziot'
 
 # 最大帧字节数
-FRAME_MAX_LEN = 4096
+FRAME_MAX_LEN = 1024
 
 PROTOCOL_NUM = 0
 

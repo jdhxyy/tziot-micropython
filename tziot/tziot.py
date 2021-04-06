@@ -88,14 +88,14 @@ def bind_pipe(ia: int, send, is_allow_send) -> int:
 
 
 def run(app):
-    """运行应用程序"""
+    """运行应用程序.如果没有应用程序,app可填写None"""
     if app is not None:
         _thread.start_new_thread(app, ())
     loop = asyncio.get_event_loop()
     loop.run_forever()
 
 
-def connect_wifi(ssid: str, key=None, timeout=5) -> bool:
+def connect_wifi(ssid: str, key=None, timeout=10) -> bool:
     """
     连接wifi
     :param ssid: wifi热点名
