@@ -34,8 +34,11 @@ pip install --target=d:/package -r requirements.txt
 ```
 
 下载后文件如下图：
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210405100333325.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2pkaDk5,size_16,color_FFFFFF,t_70)
+
 删除掉egg-info等无关文件，将所有文件夹都上传到设备的lib目录下，即可在设备中使用。
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210406050041511.png)
 
 
