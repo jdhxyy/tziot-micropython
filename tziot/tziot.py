@@ -87,6 +87,16 @@ def bind_pipe(ia: int, send, is_allow_send) -> int:
     return fpipe.pipe_bind(ia, send, is_allow_send)
 
 
+def str_to_bytearray(s: str, encoding: str = 'ascii') -> bytearray:
+    """字符串转换成字节流.encoding是编码方式,默认是ascii码.如果有汉字需要选择utf-8等编码"""
+    return bytearray(s.encode(encoding))
+
+
+def bytearray_to_str(data: bytearray, encoding: str = 'ascii') -> str:
+    """字节流转换成字符串.encoding是解码方式,默认是ascii码.如果有汉字需要选择utf-8等编码"""
+    return data.decode(encoding)
+
+
 def run(app):
     """运行应用程序.如果没有应用程序,app可填写None"""
     if app is not None:
